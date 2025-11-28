@@ -1,0 +1,441 @@
+const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
+const Application = require('../models/Application');
+const logger = require('../utils/logger');
+
+class ApplicationController {
+  // Register new application
+  async register(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
+      const { name, description, domain, allowedOrigins, plan = 'free' } = req.body;
+
+      // Check if application already exists
+      const existingApp = await Application.findOne({
+        $or: [{ name }, { domain }]
+      });
+
+      if (existingApp) {
+        return res.status(409).json({
+          success: false,
+          error: 'Application with this name or domain already exists'
+        });
+      }
+
+      // Create new application
+      const application = new Application({
+        name,
+        description,
+        domain,
+        allowedOrigins: Array.isArray(allowedOrigins) ? allowedOrigins : [allowedOrigins],
+        plan
+      });
+
+      await application.save();
+
+      // Generate access token
+      const accessToken = this.generateAccessToken(application);
+      const refreshToken = this.generateRefreshToken(application);
+
+      // Store refresh token
+      application.refreshTokens.push({
+        token: refreshToken,
+        createdAt: new Date()
+      });
+      await application.save();
+
+      logger.info('Application registered successfully', {
+        applicationId: application._id,
+        name: application.name,
+        domain: application.domain
+      });
+
+      res.status(201).json({
+        success: true,
+        data: {
+          application: {
+            id: application._id,
+            name: application.name,
+            description: application.description,
+            domain: application.domain,
+            allowedOrigins: application.allowedOrigins,
+            plan: application.plan,
+            apiKey: application.apiKey,
+            apiSecret: application._plainSecret, // Return plain secret only once
+            limits: application.limits,
+            usage: application.usage,
+            settings: application.settings,
+            createdAt: application.createdAt
+          },
+          accessToken,
+          refreshToken
+        }
+      });
+
+    } catch (error) {
+      logger.error('Application registration failed', {
+        error: error.message,
+        stack: error.stack
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+
+  // Authenticate application using API key and secret
+  async authenticate(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
+      const { apiKey, apiSecret } = req.body;
+
+      // Find application by API key
+      const application = await Application.findByApiKey(apiKey);
+      if (!application) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid API credentials'
+        });
+      }
+
+      // Verify API secret
+      const isValidSecret = await application.compareSecret(apiSecret);
+      if (!isValidSecret) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid API credentials'
+        });
+      }
+
+      // Generate tokens
+      const accessToken = this.generateAccessToken(application);
+      const refreshToken = this.generateRefreshToken(application);
+
+      // Store refresh token
+      application.refreshTokens.push({
+        token: refreshToken,
+        createdAt: new Date()
+      });
+      await application.save();
+
+      logger.info('Application authenticated successfully', {
+        applicationId: application._id,
+        name: application.name
+      });
+
+      res.json({
+        success: true,
+        data: {
+          application: {
+            id: application._id,
+            name: application.name,
+            domain: application.domain,
+            plan: application.plan,
+            limits: application.limits,
+            usage: application.usage
+          },
+          accessToken,
+          refreshToken
+        }
+      });
+
+    } catch (error) {
+      logger.error('Application authentication failed', {
+        error: error.message,
+        stack: error.stack
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+
+  // Refresh access token
+  async refreshToken(req, res) {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        return res.status(400).json({
+          success: false,
+          error: 'Refresh token is required'
+        });
+      }
+
+      // Verify refresh token
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      const application = await Application.findById(decoded.id);
+
+      if (!application || !application.isActive) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid refresh token'
+        });
+      }
+
+      // Check if refresh token exists in database
+      const tokenExists = application.refreshTokens.some(t => t.token === refreshToken);
+      if (!tokenExists) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid refresh token'
+        });
+      }
+
+      // Generate new tokens
+      const newAccessToken = this.generateAccessToken(application);
+      const newRefreshToken = this.generateRefreshToken(application);
+
+      // Remove old refresh token and add new one
+      application.refreshTokens = application.refreshTokens.filter(t => t.token !== refreshToken);
+      application.refreshTokens.push({
+        token: newRefreshToken,
+        createdAt: new Date()
+      });
+      await application.save();
+
+      res.json({
+        success: true,
+        data: {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken
+        }
+      });
+
+    } catch (error) {
+      logger.error('Token refresh failed', {
+        error: error.message,
+        stack: error.stack
+      });
+
+      res.status(401).json({
+        success: false,
+        error: 'Invalid refresh token'
+      });
+    }
+  }
+
+  // Get application profile
+  async getProfile(req, res) {
+    try {
+      const application = await Application.findById(req.application.id);
+      if (!application) {
+        return res.status(404).json({
+          success: false,
+          error: 'Application not found'
+        });
+      }
+
+      // Reset monthly usage if needed
+      application.resetMonthlyUsage();
+      await application.save();
+
+      res.json({
+        success: true,
+        data: {
+          application: {
+            id: application._id,
+            name: application.name,
+            description: application.description,
+            domain: application.domain,
+            allowedOrigins: application.allowedOrigins,
+            plan: application.plan,
+            apiKey: application.apiKey,
+            limits: application.limits,
+            usage: application.usage,
+            settings: application.settings,
+            createdAt: application.createdAt,
+            updatedAt: application.updatedAt
+          }
+        }
+      });
+
+    } catch (error) {
+      logger.error('Failed to get application profile', {
+        error: error.message,
+        stack: error.stack,
+        applicationId: req.application?.id
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+
+  // Update application settings
+  async updateSettings(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
+      const application = await Application.findById(req.application.id);
+      if (!application) {
+        return res.status(404).json({
+          success: false,
+          error: 'Application not found'
+        });
+      }
+
+      const { 
+        description, 
+        allowedOrigins, 
+        settings 
+      } = req.body;
+
+      // Update allowed fields
+      if (description !== undefined) application.description = description;
+      if (allowedOrigins !== undefined) application.allowedOrigins = allowedOrigins;
+      if (settings !== undefined) {
+        application.settings = { ...application.settings, ...settings };
+      }
+
+      await application.save();
+
+      logger.info('Application settings updated', {
+        applicationId: application._id,
+        name: application.name
+      });
+
+      res.json({
+        success: true,
+        data: {
+          application: application.toJSON()
+        }
+      });
+
+    } catch (error) {
+      logger.error('Failed to update application settings', {
+        error: error.message,
+        stack: error.stack,
+        applicationId: req.application?.id
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+
+  // Logout application (invalidate refresh token)
+  async logout(req, res) {
+    try {
+      const { refreshToken } = req.body;
+      const application = await Application.findById(req.application.id);
+
+      if (application && refreshToken) {
+        application.refreshTokens = application.refreshTokens.filter(
+          t => t.token !== refreshToken
+        );
+        await application.save();
+      }
+
+      logger.info('Application logged out', {
+        applicationId: req.application.id
+      });
+
+      res.json({
+        success: true,
+        message: 'Logged out successfully'
+      });
+
+    } catch (error) {
+      logger.error('Logout failed', {
+        error: error.message,
+        stack: error.stack,
+        applicationId: req.application?.id
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+
+  // Logout from all devices
+  async logoutAll(req, res) {
+    try {
+      const application = await Application.findById(req.application.id);
+      if (application) {
+        application.refreshTokens = [];
+        await application.save();
+      }
+
+      logger.info('Application logged out from all devices', {
+        applicationId: req.application.id
+      });
+
+      res.json({
+        success: true,
+        message: 'Logged out from all devices successfully'
+      });
+
+    } catch (error) {
+      logger.error('Logout all failed', {
+        error: error.message,
+        stack: error.stack,
+        applicationId: req.application?.id
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+
+  // Generate access token
+  generateAccessToken(application) {
+    return jwt.sign(
+      {
+        id: application._id,
+        name: application.name,
+        type: 'application'
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRY || '24h' }
+    );
+  }
+
+  // Generate refresh token
+  generateRefreshToken(application) {
+    return jwt.sign(
+      {
+        id: application._id,
+        type: 'application'
+      },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: '30d' }
+    );
+  }
+}
+
+module.exports = new ApplicationController();

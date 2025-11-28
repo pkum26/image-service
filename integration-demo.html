@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homeshopie Image Service Integration Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .step-container {
+            margin-bottom: 50px;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-right: 20px;
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(255,255,255,0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .demo-section {
+            background: #f7fafc;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .demo-title {
+            font-size: 1.3rem;
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #38a169;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .alert-info {
+            background: #bee3f8;
+            color: #2a4365;
+            border-left: 4px solid #3182ce;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .feature-desc {
+            color: #718096;
+            line-height: 1.6;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .file-drop-zone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f7fafc;
+        }
+
+        .file-drop-zone:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .file-drop-zone.dragover {
+            border-color: #667eea;
+            background: #e6fffa;
+        }
+
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .image-card {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .image-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 15px 10px 10px;
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #718096;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .step-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .step-number {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Homeshopie Image Service</h1>
+            <p>Complete Integration Guide & Interactive Demo</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Service Overview -->
+            <section class="step-container">
+                <div class="step-header">
+                    <div class="step-number">📋</div>
+                    <div class="step-title">Service Overview</div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>🎉 Multi-Tenant Image Service</strong><br>
+                    Your image service now supports multiple applications with isolated storage, usage limits, and comprehensive monitoring.
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🏢</div>
+                        <div class="feature-title">Application-Based</div>
+                        <div class="feature-desc">Each application registers independently with API Key + Secret authentication</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <div class="feature-title">Isolated Storage</div>
+                        <div class="feature-desc">Complete separation of images between different applications</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Usage Monitoring</div>
+                        <div class="feature-desc">Real-time tracking of uploads, storage, and limits per application</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">Optimized Images</div>
+                        <div class="feature-desc">Automatic WebP conversion and 5 size variants for performance</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 1: Application Registration -->
+            <section class="step-container">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Register Your Application</div>
+                </div>
+
+                <p><strong>Base URL:</strong> <code>http://localhost:5000/api</code></p>
+
+                <div class="demo-section">
+                    <div class="demo-title">🚀 Interactive Application Registration</div>
+                    
+                    <div class="input-group">
+                        <label for="appName">Application Name</label>
+                        <input type="text" id="appName" value="homeshopie" placeholder="Enter your application name">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="appDescription">Description</label>
+                        <input type="text" id="appDescription" value="E-commerce platform for home products and decor" placeholder="Describe your application">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="appDomain">Domain</label>
+                        <input type="text" id="appDomain" value="homeshopie.com" placeholder="Your application domain">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="allowedOrigins">Allowed Origins (comma-separated)</label>
+                        <textarea id="allowedOrigins" rows="3" placeholder="http://localhost:3000,https://homeshopie.com">http://localhost:3000,http://localhost:5000,https://homeshopie.com</textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="appPlan">Plan</label>
+                        <select id="appPlan">
+                            <option value="free">Free (1000 images/month, 1GB storage)</option>
+                            <option value="basic">Basic (5000 images/month, 5GB storage)</option>
+                            <option value="premium">Premium (25000 images/month, 25GB storage)</option>
+                            <option value="enterprise">Enterprise (Unlimited)</option>
+                        </select>
+                    </div>
+
+                    <button class="btn" onclick="registerApplication()">Register Application</button>
+                    
+                    <div id="registrationResult"></div>
+                </div>
+
+                <div class="code-block" data-lang="JavaScript">
+const registerApplication = async () => {
+  const response = await fetch('http://localhost:5000/api/applications/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'homeshopie',
+      description: 'E-commerce platform for home products and decor',
+      domain: 'homeshopie.com',
+      allowedOrigins: [
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'https://homeshopie.com'
+      ],
+      plan: 'free'
+    })
+  });
+  
+  const result = await response.json();
+  if (result.success) {
+    // Store credentials securely
+    localStorage.setItem('homeshopie_api_key', result.data.application.apiKey);
+    localStorage.setItem('homeshopie_api_secret', result.data.application.apiSecret);
+    localStorage.setItem('homeshopie_access_token', result.data.accessToken);
+    return result.data;
+  }
+  throw new Error(result.error);
+};
+                </div>
+            </section>
+
+            <!-- Step 2: Authentication -->
+            <section class="step-container">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Authenticate Your Application</div>
+                </div>
+
+                <div class="demo-section">
+                    <div class="demo-title">🔐 Test Authentication</div>
+                    
+                    <div class="input-group">
+                        <label for="apiKey">API Key</label>
+                        <input type="text" id="apiKey" placeholder="Your API Key (from step 1)">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="apiSecret">API Secret</label>
+                        <input type="password" id="apiSecret" placeholder="Your API Secret (from step 1)">
+                    </div>
+
+                    <button class="btn" onclick="authenticateApplication()">Authenticate</button>
+                    
+                    <div id="authResult"></div>
+                </div>
+
+                <div class="code-block" data-lang="JavaScript">
+class HomeshopieImageService {
+  constructor() {
+    this.baseURL = 'http://localhost:5000/api';
+    this.apiKey = localStorage.getItem('homeshopie_api_key');
+    this.apiSecret = localStorage.getItem('homeshopie_api_secret');
+    this.accessToken = localStorage.getItem('homeshopie_access_token');
+  }
+
+  async authenticate() {
+    const response = await fetch(`${this.baseURL}/applications/authenticate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: this.apiKey,
+        apiSecret: this.apiSecret
+      })
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      this.accessToken = result.data.accessToken;
+      localStorage.setItem('homeshopie_access_token', this.accessToken);
+      return result.data;
+    }
+    throw new Error(result.error);
+  }
+}
+                </div>
+            </section>
+
+            <!-- Step 3: Image Upload -->
+            <section class="step-container">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Upload Product Images</div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('single-upload')">Single Upload</button>
+                    <button class="tab" onclick="showTab('bulk-upload')">Bulk Upload</button>
+                    <button class="tab" onclick="showTab('gallery-view')">Gallery View</button>
+                </div>
+
+                <div id="single-upload" class="tab-content active">
+                    <div class="demo-section">
+                        <div class="demo-title">📸 Single Image Upload Demo</div>
+                        
+                        <div class="input-group">
+                            <label for="productId">Product ID</label>
+                            <input type="text" id="productId" value="prod_001" placeholder="Enter product ID">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="productCategory">Category</label>
+                            <select id="productCategory">
+                                <option value="furniture">Furniture</option>
+                                <option value="decor">Home Decor</option>
+                                <option value="lighting">Lighting</option>
+                                <option value="kitchenware">Kitchenware</option>
+                                <option value="bedding">Bedding</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="productTags">Tags (comma-separated)</label>
+                            <input type="text" id="productTags" value="modern, comfortable, living room" placeholder="Enter tags">
+                        </div>
+
+                        <div class="file-drop-zone" id="singleDropZone" ondrop="handleSingleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                            <p>📸 Drag & drop an image here or click to select</p>
+                            <p><small>Supports JPG, PNG, WebP • Max 5MB</small></p>
+                            <input type="file" id="singleFileInput" accept="image/*" style="display: none;" onchange="handleSingleFileSelect(event)">
+                        </div>
+
+                        <button class="btn" onclick="uploadSingleImage()" id="singleUploadBtn" disabled>Upload Image</button>
+                        
+                        <div id="singleUploadResult"></div>
+                        <div id="singleImagePreview" class="image-preview"></div>
+                    </div>
+                </div>
+
+                <div id="bulk-upload" class="tab-content">
+                    <div class="demo-section">
+                        <div class="demo-title">📚 Bulk Upload Demo</div>
+                        
+                        <div class="file-drop-zone" id="bulkDropZone" ondrop="handleBulkDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                            <p>📸 Drag & drop multiple images here or click to select</p>
+                            <p><small>Up to 10 files • Max 5MB each</small></p>
+                            <input type="file" id="bulkFileInput" accept="image/*" multiple style="display: none;" onchange="handleBulkFileSelect(event)">
+                        </div>
+
+                        <div class="progress-bar" id="bulkProgress" style="display: none;">
+                            <div class="progress-fill" id="bulkProgressFill"></div>
+                        </div>
+
+                        <button class="btn" onclick="uploadBulkImages()" id="bulkUploadBtn" disabled>Upload All Images</button>
+                        
+                        <div id="bulkUploadResult"></div>
+                        <div id="bulkImagePreview" class="image-preview"></div>
+                    </div>
+                </div>
+
+                <div id="gallery-view" class="tab-content">
+                    <div class="demo-section">
+                        <div class="demo-title">🖼️ Image Gallery</div>
+                        
+                        <div class="input-group">
+                            <label for="galleryProductId">Product ID to View</label>
+                            <input type="text" id="galleryProductId" value="prod_001" placeholder="Enter product ID">
+                        </div>
+
+                        <button class="btn" onclick="loadProductGallery()">Load Product Images</button>
+                        
+                        <div id="galleryResult"></div>
+                        <div id="productGallery" class="image-preview"></div>
+                    </div>
+                </div>
+
+                <div class="code-block" data-lang="JavaScript">
+// Upload single product image
+async uploadProductImage(file, productData) {
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('entityType', 'product');
+  formData.append('entityId', productData.id);
+  formData.append('productId', productData.id);
+  formData.append('category', productData.category);
+  formData.append('tags', productData.tags.join(','));
+  formData.append('alt', `${productData.name} product image`);
+  formData.append('title', productData.name);
+
+  const response = await fetch(`${this.baseURL}/images/upload`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${this.accessToken}` },
+    body: formData
+  });
+
+  return await response.json();
+}
+                </div>
+            </section>
+
+            <!-- Step 4: Application Dashboard -->
+            <section class="step-container">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Monitor Usage & Statistics</div>
+                </div>
+
+                <div class="demo-section">
+                    <div class="demo-title">📊 Application Dashboard</div>
+                    
+                    <button class="btn" onclick="loadDashboard()">Load Dashboard Data</button>
+                    
+                    <div id="dashboardData"></div>
+                </div>
+            </section>
+
+            <!-- Integration Examples -->
+            <section class="step-container">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <div class="step-title">Complete Integration Examples</div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('react-component')">React Component</button>
+                    <button class="tab" onclick="showTab('vanilla-js')">Vanilla JavaScript</button>
+                    <button class="tab" onclick="showTab('curl-examples')">cURL Examples</button>
+                </div>
+
+                <div id="react-component" class="tab-content active">
+                    <h3>React Image Upload Component</h3>
+                    <div class="code-block" data-lang="JSX">
+import React, { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+
+const HomeshopieImageUpload = ({ productId, productData, onUploadComplete }) => {
+  const [uploading, setUploading] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState([]);
+  
+  const imageService = new HomeshopieProductImageService();
+
+  const onDrop = useCallback(async (acceptedFiles) => {
+    setUploading(true);
+    
+    try {
+      const result = await imageService.uploadProductImage(acceptedFiles[0], {
+        id: productId,
+        ...productData
+      });
+      
+      if (result.success) {
+        setUploadedImages([...uploadedImages, result.data]);
+        onUploadComplete?.(result.data);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setUploading(false);
+    }
+  }, [productId, productData, uploadedImages, onUploadComplete]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp']
+    },
+    maxSize: 5242880, // 5MB
+    multiple: true
+  });
+
+  return (
+    &lt;div className="homeshopie-image-upload"&gt;
+      &lt;div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}&gt;
+        &lt;input {...getInputProps()} /&gt;
+        {uploading ? (
+          &lt;p&gt;Uploading images...&lt;/p&gt;
+        ) : (
+          &lt;p&gt;📸 Drag & drop images here, or click to select&lt;/p&gt;
+        )}
+      &lt;/div&gt;
+
+      &lt;div className="uploaded-images"&gt;
+        {uploadedImages.map((img) => (
+          &lt;div key={img.imageId} className="image-card"&gt;
+            &lt;img src={img.urls.thumbnail} alt={img.alt} /&gt;
+          &lt;/div&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+};
+
+export default HomeshopieImageUpload;
+                    </div>
+                </div>
+
+                <div id="vanilla-js" class="tab-content">
+                    <h3>Vanilla JavaScript Implementation</h3>
+                    <div class="code-block" data-lang="JavaScript">
+// Complete vanilla JS implementation
+class HomeshopieImageManager {
+  constructor() {
+    this.baseURL = 'http://localhost:5000/api';
+    this.accessToken = localStorage.getItem('homeshopie_access_token');
+  }
+
+  // Initialize file drop zone
+  initializeDropZone(elementId, onFileUpload) {
+    const dropZone = document.getElementById(elementId);
+    
+    dropZone.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
+      input.onchange = (e) => onFileUpload(e.target.files);
+      input.click();
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      onFileUpload(e.dataTransfer.files);
+    });
+  }
+
+  // Upload images with progress tracking
+  async uploadImages(files, productData) {
+    const results = [];
+    const total = files.length;
+
+    for (let i = 0; i < files.length; i++) {
+      const formData = new FormData();
+      formData.append('image', files[i]);
+      formData.append('entityType', 'product');
+      formData.append('productId', productData.id);
+      formData.append('category', productData.category);
+
+      try {
+        const response = await fetch(`${this.baseURL}/images/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${this.accessToken}` },
+          body: formData
+        });
+
+        const result = await response.json();
+        results.push(result);
+
+        // Update progress
+        this.updateProgress((i + 1) / total * 100);
+      } catch (error) {
+        console.error('Upload failed:', error);
+      }
+    }
+
+    return results;
+  }
+
+  updateProgress(percentage) {
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) {
+      progressFill.style.width = `${percentage}%`;
+    }
+  }
+}
+
+// Usage
+const imageManager = new HomeshopieImageManager();
+imageManager.initializeDropZone('dropZone', (files) => {
+  imageManager.uploadImages(files, {
+    id: 'prod_001',
+    category: 'furniture'
+  });
+});
+                    </div>
+                </div>
+
+                <div id="curl-examples" class="tab-content">
+                    <h3>cURL Command Examples</h3>
+                    <div class="code-block" data-lang="bash">
+# 1. Register Application
+curl -X POST http://localhost:5000/api/applications/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "homeshopie",
+    "description": "E-commerce platform for home products and decor",
+    "domain": "homeshopie.com",
+    "allowedOrigins": ["http://localhost:3000", "https://homeshopie.com"],
+    "plan": "free"
+  }'
+
+# 2. Authenticate Application
+curl -X POST http://localhost:5000/api/applications/authenticate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "apiKey": "ak_your_api_key_here",
+    "apiSecret": "your_api_secret_here"
+  }'
+
+# 3. Upload Single Image
+curl -X POST http://localhost:5000/api/images/upload \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "image=@/path/to/your/image.jpg" \
+  -F "entityType=product" \
+  -F "productId=prod_001" \
+  -F "category=furniture" \
+  -F "tags=modern,comfortable" \
+  -F "alt=Product image" \
+  -F "title=Modern Sofa"
+
+# 4. Get Product Images
+curl -X GET "http://localhost:5000/api/images?entityType=product&productId=prod_001" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# 5. Get Application Profile
+curl -X GET http://localhost:5000/api/applications/profile \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+                    </div>
+                </div>
+            </section>
+
+            <!-- Next Steps -->
+            <section class="step-container">
+                <div class="step-header">
+                    <div class="step-number">🚀</div>
+                    <div class="step-title">Next Steps & Production Deployment</div>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>🎊 Congratulations!</strong><br>
+                    You now have a complete multi-tenant image service ready for your homeshopie application.
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <div class="feature-title">Production Setup</div>
+                        <div class="feature-desc">
+                            <ul style="text-align: left; margin-top: 10px;">
+                                <li>Update CORS origins for your production domain</li>
+                                <li>Configure HTTPS for secure API communication</li>
+                                <li>Set up proper environment variables</li>
+                                <li>Configure MongoDB for production</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <div class="feature-title">Documentation</div>
+                        <div class="feature-desc">
+                            <ul style="text-align: left; margin-top: 10px;">
+                                <li><code>API_DOCUMENTATION.md</code> - Complete API reference</li>
+                                <li><code>APPLICATION_BASED_INTEGRATION_GUIDE.md</code> - Detailed integration guide</li>
+                                <li><code>integration-demo.html</code> - This interactive demo</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <div class="feature-title">Security Best Practices</div>
+                        <div class="feature-desc">
+                            <ul style="text-align: left; margin-top: 10px;">
+                                <li>Store API secrets securely (never in frontend code)</li>
+                                <li>Use HTTPS in production</li>
+                                <li>Implement proper token refresh logic</li>
+                                <li>Monitor usage and set appropriate limits</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let selectedSingleFile = null;
+        let selectedBulkFiles = [];
+        let accessToken = localStorage.getItem('homeshopie_access_token');
+
+        // Initialize the demo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load stored credentials
+            const apiKey = localStorage.getItem('homeshopie_api_key');
+            const apiSecret = localStorage.getItem('homeshopie_api_secret');
+            
+            if (apiKey) document.getElementById('apiKey').value = apiKey;
+            if (apiSecret) document.getElementById('apiSecret').value = apiSecret;
+
+            // Setup file drop zones
+            setupDropZones();
+        });
+
+        // Setup drag and drop functionality
+        function setupDropZones() {
+            const singleDropZone = document.getElementById('singleDropZone');
+            const bulkDropZone = document.getElementById('bulkDropZone');
+
+            // Single file drop zone
+            singleDropZone.addEventListener('click', () => {
+                document.getElementById('singleFileInput').click();
+            });
+
+            // Bulk file drop zone
+            bulkDropZone.addEventListener('click', () => {
+                document.getElementById('bulkFileInput').click();
+            });
+        }
+
+        // Application Registration
+        async function registerApplication() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Registering...';
+            btn.disabled = true;
+
+            try {
+                const name = document.getElementById('appName').value;
+                const description = document.getElementById('appDescription').value;
+                const domain = document.getElementById('appDomain').value;
+                const allowedOrigins = document.getElementById('allowedOrigins').value.split(',').map(s => s.trim());
+                const plan = document.getElementById('appPlan').value;
+
+                const response = await fetch('http://localhost:5000/api/applications/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name,
+                        description,
+                        domain,
+                        allowedOrigins,
+                        plan
+                    })
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('registrationResult');
+
+                if (result.success) {
+                    // Store credentials
+                    localStorage.setItem('homeshopie_api_key', result.data.application.apiKey);
+                    localStorage.setItem('homeshopie_api_secret', result.data.application.apiSecret);
+                    localStorage.setItem('homeshopie_access_token', result.data.accessToken);
+                    localStorage.setItem('homeshopie_refresh_token', result.data.refreshToken);
+
+                    // Update form fields
+                    document.getElementById('apiKey').value = result.data.application.apiKey;
+                    document.getElementById('apiSecret').value = result.data.application.apiSecret;
+
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>✅ Application Registered Successfully!</strong><br><br>
+                            <strong>API Key:</strong> <code>${result.data.application.apiKey}</code><br>
+                            <strong>API Secret:</strong> <code>${result.data.application.apiSecret}</code><br>
+                            <strong>Plan:</strong> ${result.data.application.plan}<br>
+                            <strong>Monthly Limit:</strong> ${result.data.application.limits.maxImagesPerMonth} images<br>
+                            <strong>Storage Limit:</strong> ${Math.round(result.data.application.limits.maxStorageSize / 1024 / 1024)}MB<br><br>
+                            <small><strong>⚠️ Important:</strong> Store these credentials securely. The API secret is only shown once!</small>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            <strong>❌ Registration Failed:</strong> ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('registrationResult').innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>❌ Network Error:</strong> ${error.message}<br>
+                        <small>Make sure the image service is running on port 5000</small>
+                    </div>
+                `;
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Application Authentication
+        async function authenticateApplication() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Authenticating...';
+            btn.disabled = true;
+
+            try {
+                const apiKey = document.getElementById('apiKey').value;
+                const apiSecret = document.getElementById('apiSecret').value;
+
+                const response = await fetch('http://localhost:5000/api/applications/authenticate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        apiKey,
+                        apiSecret
+                    })
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('authResult');
+
+                if (result.success) {
+                    // Store new tokens
+                    localStorage.setItem('homeshopie_access_token', result.data.accessToken);
+                    localStorage.setItem('homeshopie_refresh_token', result.data.refreshToken);
+                    accessToken = result.data.accessToken;
+
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>✅ Authentication Successful!</strong><br><br>
+                            <strong>Application:</strong> ${result.data.application.name}<br>
+                            <strong>Plan:</strong> ${result.data.application.plan}<br>
+                            <strong>Images Used:</strong> ${result.data.application.usage.totalImages}<br>
+                            <strong>Monthly Uploads:</strong> ${result.data.application.usage.currentMonthUploads}/${result.data.application.limits.maxImagesPerMonth}<br>
+                            <strong>Storage Used:</strong> ${Math.round(result.data.application.usage.totalStorageUsed / 1024 / 1024)}MB / ${Math.round(result.data.application.limits.maxStorageSize / 1024 / 1024)}MB
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            <strong>❌ Authentication Failed:</strong> ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('authResult').innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>❌ Network Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // File handling functions
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleSingleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                selectedSingleFile = files[0];
+                updateSingleFilePreview();
+            }
+        }
+
+        function handleBulkDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            const files = Array.from(event.dataTransfer.files);
+            if (files.length > 0) {
+                selectedBulkFiles = files.slice(0, 10); // Limit to 10 files
+                updateBulkFilePreview();
+            }
+        }
+
+        function handleSingleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                selectedSingleFile = files[0];
+                updateSingleFilePreview();
+            }
+        }
+
+        function handleBulkFileSelect(event) {
+            const files = Array.from(event.target.files);
+            if (files.length > 0) {
+                selectedBulkFiles = files.slice(0, 10);
+                updateBulkFilePreview();
+            }
+        }
+
+        function updateSingleFilePreview() {
+            if (!selectedSingleFile) return;
+
+            const preview = document.getElementById('singleImagePreview');
+            preview.innerHTML = `
+                <div class="image-card">
+                    <img src="${URL.createObjectURL(selectedSingleFile)}" alt="Preview">
+                    <div class="image-info">
+                        <strong>${selectedSingleFile.name}</strong><br>
+                        ${Math.round(selectedSingleFile.size / 1024)}KB
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('singleUploadBtn').disabled = false;
+        }
+
+        function updateBulkFilePreview() {
+            if (!selectedBulkFiles.length) return;
+
+            const preview = document.getElementById('bulkImagePreview');
+            preview.innerHTML = selectedBulkFiles.map(file => `
+                <div class="image-card">
+                    <img src="${URL.createObjectURL(file)}" alt="Preview">
+                    <div class="image-info">
+                        <strong>${file.name}</strong><br>
+                        ${Math.round(file.size / 1024)}KB
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('bulkUploadBtn').disabled = false;
+        }
+
+        // Upload functions
+        async function uploadSingleImage() {
+            if (!selectedSingleFile || !accessToken) {
+                alert('Please select a file and authenticate first');
+                return;
+            }
+
+            const btn = document.getElementById('singleUploadBtn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Uploading...';
+            btn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('image', selectedSingleFile);
+                formData.append('entityType', 'product');
+                formData.append('entityId', document.getElementById('productId').value);
+                formData.append('productId', document.getElementById('productId').value);
+                formData.append('category', document.getElementById('productCategory').value);
+                formData.append('tags', document.getElementById('productTags').value);
+                formData.append('alt', `${document.getElementById('productId').value} product image`);
+                formData.append('title', selectedSingleFile.name);
+
+                const response = await fetch('http://localhost:5000/api/images/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('singleUploadResult');
+
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>✅ Upload Successful!</strong><br><br>
+                            <strong>Image ID:</strong> ${result.data.imageId}<br>
+                            <strong>File Size:</strong> ${Math.round(result.data.size / 1024)}KB<br>
+                            <strong>Dimensions:</strong> ${result.data.metadata.width} × ${result.data.metadata.height}<br>
+                            <strong>Format:</strong> ${result.data.metadata.format}<br>
+                            <strong>Category:</strong> ${result.data.category}<br>
+                            <strong>Is Public:</strong> ${result.data.isPublic ? 'Yes' : 'No'}<br><br>
+                            <strong>Available Sizes:</strong><br>
+                            <small>
+                                • Thumbnail: <a href="${result.data.urls.thumbnail}" target="_blank">View</a><br>
+                                • Small: <a href="${result.data.urls.small}" target="_blank">View</a><br>
+                                • Medium: <a href="${result.data.urls.medium}" target="_blank">View</a><br>
+                                • Large: <a href="${result.data.urls.large}" target="_blank">View</a><br>
+                                • Original: <a href="${result.data.urls.original}" target="_blank">View</a>
+                            </small>
+                        </div>
+                    `;
+
+                    // Update preview with uploaded image info
+                    document.getElementById('singleImagePreview').innerHTML = `
+                        <div class="image-card">
+                            <img src="${result.data.urls.medium}" alt="${result.data.alt}">
+                            <div class="image-info">
+                                <strong>✅ Uploaded</strong><br>
+                                ${result.data.imageId}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            <strong>❌ Upload Failed:</strong> ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('singleUploadResult').innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>❌ Network Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = true; // Keep disabled until new file selected
+            }
+        }
+
+        async function uploadBulkImages() {
+            if (!selectedBulkFiles.length || !accessToken) {
+                alert('Please select files and authenticate first');
+                return;
+            }
+
+            const btn = document.getElementById('bulkUploadBtn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Uploading...';
+            btn.disabled = true;
+
+            const progressBar = document.getElementById('bulkProgress');
+            const progressFill = document.getElementById('bulkProgressFill');
+            progressBar.style.display = 'block';
+
+            try {
+                const formData = new FormData();
+                selectedBulkFiles.forEach(file => {
+                    formData.append('images[]', file);
+                });
+                formData.append('entityType', 'product');
+                formData.append('entityId', document.getElementById('productId').value);
+                formData.append('productId', document.getElementById('productId').value);
+                formData.append('category', document.getElementById('productCategory').value);
+
+                const response = await fetch('http://localhost:5000/api/images/bulk-upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('bulkUploadResult');
+
+                progressFill.style.width = '100%';
+
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>✅ Bulk Upload Completed!</strong><br><br>
+                            <strong>Total Files:</strong> ${result.data.summary.total}<br>
+                            <strong>Successful:</strong> ${result.data.summary.successful}<br>
+                            <strong>Failed:</strong> ${result.data.summary.failed}<br><br>
+                            ${result.data.errors.length > 0 ? 
+                                `<strong>Errors:</strong><br><small>${result.data.errors.map(e => `• ${e.filename}: ${e.error}`).join('<br>')}</small>` 
+                                : ''
+                            }
+                        </div>
+                    `;
+
+                    // Update preview with uploaded images
+                    document.getElementById('bulkImagePreview').innerHTML = result.data.uploaded.map(img => `
+                        <div class="image-card">
+                            <img src="${img.accessUrl.replace('?token=', '?size=thumbnail&token=')}" alt="Uploaded">
+                            <div class="image-info">
+                                <strong>✅ Uploaded</strong><br>
+                                ${Math.round(img.size / 1024)}KB
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            <strong>❌ Bulk Upload Failed:</strong> ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('bulkUploadResult').innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>❌ Network Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = true;
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                    progressFill.style.width = '0%';
+                }, 2000);
+            }
+        }
+
+        async function loadProductGallery() {
+            if (!accessToken) {
+                alert('Please authenticate first');
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Loading...';
+            btn.disabled = true;
+
+            try {
+                const productId = document.getElementById('galleryProductId').value;
+                const response = await fetch(`http://localhost:5000/api/images?entityType=product&productId=${productId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('galleryResult');
+                const galleryDiv = document.getElementById('productGallery');
+
+                if (result.success) {
+                    if (result.data.images.length > 0) {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <strong>✅ Found ${result.data.images.length} images for product: ${productId}</strong>
+                            </div>
+                        `;
+
+                        galleryDiv.innerHTML = result.data.images.map(img => `
+                            <div class="image-card">
+                                <img src="${img.urls.medium}" alt="${img.alt}">
+                                <div class="image-info">
+                                    <strong>${img.title}</strong><br>
+                                    ${Math.round(img.size / 1024)}KB • ${img.metadata.width}×${img.metadata.height}<br>
+                                    <small>${new Date(img.createdAt).toLocaleDateString()}</small>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-info">
+                                <strong>ℹ️ No images found for product: ${productId}</strong><br>
+                                Try uploading some images first!
+                            </div>
+                        `;
+                        galleryDiv.innerHTML = '';
+                    }
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            <strong>❌ Gallery Load Failed:</strong> ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('galleryResult').innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>❌ Network Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function loadDashboard() {
+            if (!accessToken) {
+                alert('Please authenticate first');
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Loading...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/applications/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                const result = await response.json();
+                const dashboardDiv = document.getElementById('dashboardData');
+
+                if (result.success) {
+                    const app = result.data.application;
+                    dashboardDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>📊 Application Dashboard</strong>
+                        </div>
+                        <div class="features-grid" style="margin-top: 20px;">
+                            <div class="feature-card">
+                                <div class="feature-title">Application Info</div>
+                                <div class="feature-desc">
+                                    <strong>Name:</strong> ${app.name}<br>
+                                    <strong>Domain:</strong> ${app.domain}<br>
+                                    <strong>Plan:</strong> ${app.plan}<br>
+                                    <strong>Created:</strong> ${new Date(app.createdAt).toLocaleDateString()}
+                                </div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-title">Usage Statistics</div>
+                                <div class="feature-desc">
+                                    <strong>Total Images:</strong> ${app.usage.totalImages}<br>
+                                    <strong>Storage Used:</strong> ${Math.round(app.usage.totalStorageUsed / 1024 / 1024)}MB<br>
+                                    <strong>This Month:</strong> ${app.usage.currentMonthUploads} uploads
+                                </div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-title">Limits & Quotas</div>
+                                <div class="feature-desc">
+                                    <strong>Monthly Limit:</strong> ${app.limits.maxImagesPerMonth} images<br>
+                                    <strong>Storage Limit:</strong> ${Math.round(app.limits.maxStorageSize / 1024 / 1024)}MB<br>
+                                    <strong>File Size Limit:</strong> ${Math.round(app.limits.maxFileSize / 1024 / 1024)}MB
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    dashboardDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            <strong>❌ Dashboard Load Failed:</strong> ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('dashboardData').innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>❌ Network Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
