@@ -54,10 +54,16 @@ const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = process.env.CORS_ORIGIN 
       ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-      : ['http://localhost:3000', 'http://localhost:3001'];
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5000'];
     
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
+    // In development, allow requests with no origin (local files, mobile apps, etc.)
+    if (!origin || origin === 'null') {
+      if (process.env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      // In production, still allow mobile apps and extensions
+      return callback(null, true);
+    }
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);

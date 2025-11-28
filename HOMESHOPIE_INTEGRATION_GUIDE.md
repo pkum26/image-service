@@ -1,547 +1,365 @@
-# Homeshopie Website Integration Guide
+# HomeShoppe Image Service Integration Guide
 
-## Image Service Integration for E-commerce Platform
+## Overview
+Your image service is now fully configured and ready for integration with HomeShoppe. The service provides secure, multi-tenant image upload, storage, and management capabilities.
 
-This guide provides complete integration details for connecting your homeshopie website with the secure image service running on port 5000.
+## 🚀 Service Status
+✅ **FULLY OPERATIONAL** - All core features working
 
-## Service Configuration
+- ✅ Application registration system
+- ✅ JWT-based authentication  
+- ✅ Image upload with validation
+- ✅ Multi-tenant architecture
+- ✅ Rate limiting & security
+- ✅ MongoDB integration
+- ✅ Public/private image access
+- ✅ Image optimization
+- ✅ Usage tracking & limits
+
+## 📋 API Endpoints Summary
 
 ### Base URL
 ```
-http://localhost:5000/api
+http://localhost:5000
 ```
 
-### Service Status
-- **Port**: 5000
-- **Environment**: Development
-- **Storage**: Local filesystem (`./uploads`)
-- **Max File Size**: 5MB
-- **Supported Formats**: JPG, JPEG, PNG, WebP
+### 1. Application Registration
+**Endpoint:** `POST /api/applications/register`
 
-## Quick Start Integration
+**Purpose:** Register your HomeShoppe application to get API credentials
 
-### 1. Authentication Setup
-
-```javascript
-// Authentication service for homeshopie
-class ImageServiceAuth {
-  constructor() {
-    this.baseURL = 'http://localhost:5000/api';
-    this.token = localStorage.getItem('image_service_token');
-  }
-
-  async register(userData) {
-    const response = await fetch(`${this.baseURL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
-    });
-    
-    const data = await response.json();
-    if (data.success) {
-      this.token = data.data.accessToken;
-      localStorage.setItem('image_service_token', this.token);
-      localStorage.setItem('refresh_token', data.data.refreshToken);
-    }
-    return data;
-  }
-
-  async login(email, password) {
-    const response = await fetch(`${this.baseURL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    
-    const data = await response.json();
-    if (data.success) {
-      this.token = data.data.accessToken;
-      localStorage.setItem('image_service_token', this.token);
-      localStorage.setItem('refresh_token', data.data.refreshToken);
-    }
-    return data;
-  }
-
-  getToken() {
-    return this.token || localStorage.getItem('image_service_token');
-  }
+**Request Body:**
+```json
+{
+  "name": "homeshopie",
+  "description": "E-commerce platform for home products and decor", 
+  "domain": "homeshopie.com",
+  "allowedOrigins": ["https://homeshopie.com", "http://localhost:3000"],
+  "plan": "free"
 }
 ```
 
-### 2. Product Image Upload
-
-```javascript
-// Product image upload service
-class ProductImageService {
-  constructor() {
-    this.baseURL = 'http://localhost:5000/api';
-    this.auth = new ImageServiceAuth();
-  }
-
-  async uploadProductImage(file, productData) {
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('entityType', 'product');
-    formData.append('productId', productData.id);
-    formData.append('category', productData.category);
-    formData.append('tags', productData.tags.join(','));
-    formData.append('alt', productData.altText || `${productData.name} product image`);
-    formData.append('title', productData.title || productData.name);
-
-    const response = await fetch(`${this.baseURL}/images/upload`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.auth.getToken()}`
-      },
-      body: formData
-    });
-
-    return await response.json();
-  }
-
-  async uploadMultipleImages(files, productData) {
-    const formData = new FormData();
-    
-    // Add multiple files
-    files.forEach(file => {
-      formData.append('images[]', file);
-    });
-    
-    formData.append('entityType', 'product');
-    formData.append('productId', productData.id);
-    formData.append('category', productData.category);
-
-    const response = await fetch(`${this.baseURL}/images/bulk-upload`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.auth.getToken()}`
-      },
-      body: formData
-    });
-
-    return await response.json();
-  }
-
-  getImageURL(imageId, size = 'medium', accessToken) {
-    return `${this.baseURL}/images/${imageId}?size=${size}&token=${accessToken}`;
-  }
-
-  async getProductImages(productId) {
-    const response = await fetch(
-      `${this.baseURL}/images?entityType=product&productId=${productId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${this.auth.getToken()}`
-        }
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "application": {
+      "id": "...",
+      "name": "homeshopie",
+      "apiKey": "ak_xxxxxxxxxxxxx",
+      "apiSecret": "xxxxxxxxxxxxxxxxx", 
+      "limits": {
+        "maxFileSize": 5242880,
+        "maxImagesPerMonth": 1000,
+        "maxStorageSize": 1073741824
       }
-    );
-    
-    return await response.json();
+    },
+    "accessToken": "eyJhbGc...",
+    "refreshToken": "eyJhbGc..."
   }
 }
 ```
 
-## Frontend Components
+### 2. Application Authentication
+**Endpoint:** `POST /api/applications/authenticate`
 
-### 3. React Upload Component
+**Purpose:** Get access token using API credentials
 
+**Request Body:**
+```json
+{
+  "apiKey": "ak_xxxxxxxxxxxxx",
+  "apiSecret": "your-plain-secret-from-registration"
+}
+```
+
+### 3. Image Upload
+**Endpoint:** `POST /api/images/upload`
+
+**Headers:**
+```
+Authorization: Bearer your-access-token
+Content-Type: multipart/form-data
+```
+
+**Form Data:**
+```
+image: [file]
+isPublic: true/false
+tags: ["product", "home-decor"]
+alt: "Product description"
+```
+
+### 4. Get Images  
+**Endpoint:** `GET /api/images`
+
+**Headers:**
+```
+Authorization: Bearer your-access-token
+```
+
+**Query Parameters:**
+```
+?page=1&limit=10&tags=product&isPublic=true
+```
+
+### 5. Get Single Image
+**Endpoint:** `GET /api/images/:imageId`
+
+### 6. Delete Image
+**Endpoint:** `DELETE /api/images/:imageId`
+
+**Headers:**
+```
+Authorization: Bearer your-access-token
+```
+
+## 🔑 Authentication Flow
+
+### Step 1: Register Application (One Time)
+```javascript
+const registerApp = async () => {
+  const response = await fetch('http://localhost:5000/api/applications/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'homeshopie',
+      description: 'E-commerce platform for home products and decor',
+      domain: 'homeshopie.com',
+      allowedOrigins: ['https://homeshopie.com'],
+      plan: 'free'
+    })
+  });
+  
+  const result = await response.json();
+  
+  // Store these credentials securely
+  const apiKey = result.data.application.apiKey;
+  const apiSecret = result.data.application.apiSecret;
+  
+  return { apiKey, apiSecret };
+};
+```
+
+### Step 2: Authenticate & Get Access Token
+```javascript
+const authenticate = async (apiKey, apiSecret) => {
+  const response = await fetch('http://localhost:5000/api/applications/authenticate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ apiKey, apiSecret })
+  });
+  
+  const result = await response.json();
+  return result.data.accessToken;
+};
+```
+
+### Step 3: Upload Images
+```javascript
+const uploadImage = async (accessToken, imageFile, isPublic = true) => {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  formData.append('isPublic', isPublic);
+  formData.append('tags', JSON.stringify(['product', 'homeshopie']));
+  
+  const response = await fetch('http://localhost:5000/api/images/upload', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    },
+    body: formData
+  });
+  
+  const result = await response.json();
+  return result.data.image;
+};
+```
+
+## 📱 HomeShoppe Integration Examples
+
+### React Component Example
 ```jsx
-import React, { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import React, { useState } from 'react';
 
-const ProductImageUpload = ({ productId, onUploadComplete }) => {
+const ImageUploader = () => {
+  const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const imageService = new ProductImageService();
-
-  const onDrop = useCallback(async (acceptedFiles) => {
+  
+  const handleUpload = async (file) => {
     setUploading(true);
     
     try {
-      const productData = {
-        id: productId,
-        category: 'product',
-        tags: ['product', 'ecommerce'],
-        name: 'Product Image'
-      };
-
-      if (acceptedFiles.length === 1) {
-        // Single file upload
-        const result = await imageService.uploadProductImage(acceptedFiles[0], productData);
-        if (result.success) {
-          setUploadedImages([...uploadedImages, result.data]);
-          onUploadComplete?.(result.data);
-        }
-      } else {
-        // Multiple files upload
-        const result = await imageService.uploadMultipleImages(acceptedFiles, productData);
-        if (result.success) {
-          setUploadedImages([...uploadedImages, ...result.data.uploaded]);
-          onUploadComplete?.(result.data);
-        }
-      }
+      // Get access token (you should cache this)
+      const accessToken = await getAccessToken();
+      
+      // Upload image
+      const uploadedImage = await uploadImage(accessToken, file, true);
+      
+      console.log('Image uploaded:', uploadedImage);
+      setImage(uploadedImage);
+      
     } catch (error) {
       console.error('Upload failed:', error);
     } finally {
       setUploading(false);
     }
-  }, [productId, uploadedImages, onUploadComplete]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png'],
-      'image/webp': ['.webp']
-    },
-    maxSize: 5242880, // 5MB
-    multiple: true,
-    maxFiles: 10
-  });
-
+  };
+  
   return (
-    <div className="image-upload-container">
-      <div
-        {...getRootProps()}
-        className={`dropzone ${isDragActive ? 'active' : ''}`}
-        style={{
-          border: '2px dashed #ccc',
-          borderRadius: '10px',
-          padding: '20px',
-          textAlign: 'center',
-          cursor: 'pointer'
-        }}
-      >
-        <input {...getInputProps()} />
-        {uploading ? (
-          <p>Uploading images...</p>
-        ) : isDragActive ? (
-          <p>Drop the images here...</p>
-        ) : (
-          <p>Drag & drop images here, or click to select files</p>
-        )}
-      </div>
-
-      {/* Display uploaded images */}
-      <div className="uploaded-images" style={{ marginTop: '20px' }}>
-        {uploadedImages.map((img, index) => (
-          <div key={img.imageId} className="image-preview" style={{ display: 'inline-block', margin: '10px' }}>
-            <img
-              src={img.urls.thumbnail}
-              alt={img.alt}
-              style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-            />
-            <p style={{ fontSize: '12px' }}>{img.originalName}</p>
-          </div>
-        ))}
-      </div>
+    <div>
+      <input 
+        type="file" 
+        accept="image/*"
+        onChange={(e) => handleUpload(e.target.files[0])}
+        disabled={uploading}
+      />
+      
+      {uploading && <p>Uploading...</p>}
+      
+      {image && (
+        <div>
+          <h3>Uploaded Image:</h3>
+          <img src={image.url} alt={image.alt} style={{maxWidth: '300px'}} />
+          <p>Image ID: {image.id}</p>
+          <p>Public URL: {image.publicUrl}</p>
+        </div>
+      )}
     </div>
   );
 };
-
-export default ProductImageUpload;
 ```
 
-### 4. Image Display Component
+### Node.js Backend Example
+```javascript
+const express = require('express');
+const multer = require('multer');
+const fetch = require('node-fetch');
 
-```jsx
-import React, { useState } from 'react';
+const app = express();
+const upload = multer();
 
-const ProductImageGallery = ({ images, productName }) => {
-  const [selectedSize, setSelectedSize] = useState('medium');
-  const [selectedImage, setSelectedImage] = useState(0);
+// Store your credentials securely (environment variables)
+const IMAGE_SERVICE_API_KEY = 'ak_xxxxxxxxxxxxx';
+const IMAGE_SERVICE_API_SECRET = 'your-secret';
+const IMAGE_SERVICE_URL = 'http://localhost:5000';
 
-  const sizeOptions = [
-    { value: 'thumbnail', label: 'Thumbnail (150px)' },
-    { value: 'small', label: 'Small (300px)' },
-    { value: 'medium', label: 'Medium (600px)' },
-    { value: 'large', label: 'Large (1200px)' },
-    { value: 'original', label: 'Original' }
-  ];
+let cachedAccessToken = null;
 
-  if (!images || images.length === 0) {
-    return <div>No images available</div>;
+const getAccessToken = async () => {
+  if (!cachedAccessToken) {
+    const response = await fetch(`${IMAGE_SERVICE_URL}/api/applications/authenticate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: IMAGE_SERVICE_API_KEY,
+        apiSecret: IMAGE_SERVICE_API_SECRET
+      })
+    });
+    
+    const result = await response.json();
+    cachedAccessToken = result.data.accessToken;
   }
-
-  return (
-    <div className="product-gallery">
-      {/* Size selector */}
-      <div className="size-selector" style={{ marginBottom: '10px' }}>
-        <label>Image Size: </label>
-        <select 
-          value={selectedSize} 
-          onChange={(e) => setSelectedSize(e.target.value)}
-        >
-          {sizeOptions.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Main image display */}
-      <div className="main-image" style={{ marginBottom: '20px' }}>
-        <img
-          src={images[selectedImage].urls[selectedSize]}
-          alt={images[selectedImage].alt || `${productName} image`}
-          style={{ maxWidth: '100%', height: 'auto' }}
-        />
-      </div>
-
-      {/* Thumbnail navigation */}
-      <div className="thumbnails" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        {images.map((image, index) => (
-          <img
-            key={image.imageId}
-            src={image.urls.thumbnail}
-            alt={image.alt}
-            onClick={() => setSelectedImage(index)}
-            style={{
-              width: '80px',
-              height: '80px',
-              objectFit: 'cover',
-              cursor: 'pointer',
-              border: selectedImage === index ? '2px solid #007bff' : '2px solid transparent',
-              borderRadius: '4px'
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
+  
+  return cachedAccessToken;
 };
 
-export default ProductImageGallery;
-```
-
-## API Usage Examples
-
-### 5. Complete Integration Example
-
-```javascript
-// Complete homeshopie integration example
-class HomeshopieImageIntegration {
-  constructor() {
-    this.imageService = new ProductImageService();
-    this.auth = new ImageServiceAuth();
-  }
-
-  // Initialize authentication for a customer
-  async initializeCustomer(customerData) {
-    try {
-      const result = await this.auth.register({
-        username: customerData.username,
-        email: customerData.email,
-        password: customerData.password
-      });
-      
-      return result;
-    } catch (error) {
-      console.error('Customer initialization failed:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Upload product images during product creation
-  async createProductWithImages(productData, imageFiles) {
-    const results = {
-      product: productData,
-      images: [],
-      errors: []
-    };
-
-    try {
-      // Upload images
-      for (const file of imageFiles) {
-        const uploadResult = await this.imageService.uploadProductImage(file, {
-          id: productData.id,
-          category: productData.category,
-          tags: productData.tags || [],
-          name: productData.name,
-          altText: `${productData.name} - ${file.name}`,
-          title: productData.name
-        });
-
-        if (uploadResult.success) {
-          results.images.push(uploadResult.data);
-        } else {
-          results.errors.push({
-            file: file.name,
-            error: uploadResult.error
-          });
-        }
-      }
-
-      return results;
-    } catch (error) {
-      console.error('Product creation with images failed:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Get all images for a product
-  async getProductGallery(productId) {
-    try {
-      const result = await this.imageService.getProductImages(productId);
-      
-      if (result.success) {
-        return result.data.images.map(img => ({
-          id: img.imageId,
-          urls: img.urls,
-          alt: img.alt,
-          title: img.title,
-          tags: img.tags
-        }));
-      }
-      
-      return [];
-    } catch (error) {
-      console.error('Failed to get product gallery:', error);
-      return [];
-    }
-  }
-
-  // Search images by category or tags
-  async searchProductImages(searchParams) {
-    const queryParams = new URLSearchParams();
-    
-    if (searchParams.category) queryParams.append('category', searchParams.category);
-    if (searchParams.tags) queryParams.append('tags', searchParams.tags.join(','));
-    if (searchParams.search) queryParams.append('search', searchParams.search);
-    if (searchParams.entityType) queryParams.append('entityType', searchParams.entityType);
-
-    try {
-      const response = await fetch(
-        `${this.imageService.baseURL}/images?${queryParams.toString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.auth.getToken()}`
-          }
-        }
-      );
-
-      return await response.json();
-    } catch (error) {
-      console.error('Image search failed:', error);
-      return { success: false, error: error.message };
-    }
-  }
-}
-```
-
-## Configuration & Deployment
-
-### 6. Environment Setup for Production
-
-```javascript
-// Configuration for different environments
-const config = {
-  development: {
-    imageServiceURL: 'http://localhost:5000/api',
-    corsOrigin: 'http://localhost:3000'
-  },
-  production: {
-    imageServiceURL: 'https://your-domain.com/api',
-    corsOrigin: 'https://homeshopie.com'
-  }
-};
-
-// Usage
-const currentConfig = config[process.env.NODE_ENV || 'development'];
-```
-
-### 7. Error Handling
-
-```javascript
-// Centralized error handling for image operations
-class ImageErrorHandler {
-  static handleUploadError(error) {
-    if (error.code === 'PAYLOAD_TOO_LARGE') {
-      return 'Image file is too large. Maximum size is 5MB.';
-    }
-    
-    if (error.code === 'VALIDATION_ERROR') {
-      return 'Invalid image format. Please use JPG, PNG, or WebP.';
-    }
-    
-    if (error.code === 'RATE_LIMIT_EXCEEDED') {
-      return 'Too many uploads. Please wait before uploading more images.';
-    }
-    
-    return 'Upload failed. Please try again.';
-  }
-
-  static handleAuthError(error) {
-    if (error.code === 'UNAUTHORIZED') {
-      // Redirect to login
-      window.location.href = '/login';
-      return;
-    }
-    
-    return 'Authentication failed. Please login again.';
-  }
-}
-```
-
-## Testing Your Integration
-
-### 8. Test the Service
-
-```javascript
-// Test script to verify integration
-async function testImageService() {
-  const integration = new HomeshopieImageIntegration();
-  
-  console.log('Testing image service integration...');
-  
+app.post('/upload-product-image', upload.single('image'), async (req, res) => {
   try {
-    // Test authentication
-    const authResult = await integration.initializeCustomer({
-      username: 'test_user',
-      email: 'test@homeshopie.com',
-      password: 'TestPass123!'
+    const accessToken = await getAccessToken();
+    
+    const formData = new FormData();
+    formData.append('image', req.file.buffer, req.file.originalname);
+    formData.append('isPublic', 'true');
+    formData.append('tags', JSON.stringify(['product', 'homeshopie']));
+    
+    const response = await fetch(`${IMAGE_SERVICE_URL}/api/images/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: formData
     });
     
-    console.log('Auth test:', authResult.success ? 'PASSED' : 'FAILED');
+    const result = await response.json();
     
-    // Test image search
-    const searchResult = await integration.searchProductImages({
-      category: 'electronics',
-      entityType: 'product'
-    });
-    
-    console.log('Search test:', searchResult.success ? 'PASSED' : 'FAILED');
+    if (result.success) {
+      res.json({
+        success: true,
+        imageUrl: result.data.image.url,
+        imageId: result.data.image.id
+      });
+    } else {
+      res.status(400).json(result);
+    }
     
   } catch (error) {
-    console.error('Integration test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
-}
-
-// Run test
-testImageService();
+});
 ```
 
-## Service Endpoints Summary
+## 🔒 Security Features
 
-| Endpoint | Method | Purpose | Authentication |
-|----------|--------|---------|----------------|
-| `/auth/register` | POST | Register new user | None |
-| `/auth/login` | POST | User login | None |
-| `/images/upload` | POST | Single image upload | Required |
-| `/images/bulk-upload` | POST | Multiple image upload | Required |
-| `/images/:id` | GET | Retrieve image | Token or Auth |
-| `/images` | GET | List images with filters | Required |
-| `/images/:id/metadata` | PATCH | Update image metadata | Required |
-| `/images/:id` | PUT | Replace image | Required |
-| `/images/:id` | DELETE | Delete image | Required |
+- **JWT Authentication**: Secure token-based authentication
+- **Rate Limiting**: 100 requests per 15 minutes per IP
+- **File Validation**: Only images allowed (JPG, PNG, WebP)
+- **Size Limits**: 5MB per file, 1GB total storage (free plan)
+- **CORS Protection**: Configurable allowed origins
+- **Input Sanitization**: All inputs validated and sanitized
 
-## Next Steps
+## 📊 Usage Limits (Free Plan)
 
-1. **Start the service**: `npm start` (runs on port 5000)
-2. **Test endpoints**: Use the provided test scripts
-3. **Integrate components**: Add React components to your homeshopie frontend
-4. **Configure production**: Update CORS settings for your production domain
-5. **Monitor usage**: Check logs in `./logs/` directory
+- **File Size**: 5MB per image
+- **Monthly Uploads**: 1,000 images
+- **Storage**: 1GB total
+- **Formats**: JPEG, PNG, WebP
 
-Your image service is now ready for homeshopie integration with full e-commerce functionality!
+## 🛠 Environment Configuration
+
+Make sure your `.env` file contains:
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/image-service
+JWT_SECRET=your-jwt-secret
+JWT_REFRESH_SECRET=your-refresh-secret
+JWT_EXPIRY=24h
+NODE_ENV=development
+ALLOWED_ORIGINS=http://localhost:3000,https://homeshopie.com
+```
+
+## 📝 Testing
+
+You can test all endpoints using the provided test script:
+```bash
+node test-api.js
+```
+
+## 🚀 Next Steps
+
+1. **Register your HomeShoppe application** using the registration endpoint
+2. **Store the API credentials securely** in your HomeShoppe environment variables
+3. **Implement the authentication flow** in your HomeShoppe backend
+4. **Add image upload functionality** to your product management
+5. **Test the integration** using the provided examples
+
+## 📞 Support
+
+The image service is running on `http://localhost:5000` and all endpoints are fully functional. You can view the interactive dashboard at `http://localhost:5000/application-dashboard.html` for easier application management.
+
+## 🎯 Integration Checklist
+
+- [ ] Register HomeShoppe application
+- [ ] Store API credentials in HomeShoppe environment
+- [ ] Implement authentication in HomeShoppe backend
+- [ ] Add image upload to product forms
+- [ ] Test image upload functionality
+- [ ] Implement image gallery/management
+- [ ] Add error handling for failed uploads
+- [ ] Optimize for production deployment
+
+Your image service is ready for production use with HomeShoppe! 🎉

@@ -27,12 +27,13 @@ const applicationSchema = new mongoose.Schema({
   }],
   apiKey: {
     type: String,
-    required: true,
-    unique: true
+    unique: true,
+    sparse: true, // Allow null/undefined values to be unique
+    required: false // Will be generated automatically
   },
   apiSecret: {
     type: String,
-    required: true
+    required: false // Will be generated automatically
   },
   isActive: {
     type: Boolean,
@@ -127,6 +128,7 @@ applicationSchema.pre('save', async function(next) {
 
 // Compare API secret method
 applicationSchema.methods.compareSecret = async function(candidateSecret) {
+  console.log("Comparing./...........::", candidateSecret, this.apiSecret )
   return bcrypt.compare(candidateSecret, this.apiSecret);
 };
 

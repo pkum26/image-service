@@ -140,10 +140,9 @@ const gracefulShutdown = (signal) => {
     logger.info('HTTP server closed');
     
     // Close database connection
-    mongoose.connection.close(false, () => {
-      logger.info('MongoDB connection closed');
-      process.exit(0);
-    });
+    mongoose.connection.close();
+    logger.info('MongoDB connection closed');
+    process.exit(0);
   });
 
   // Force close server after 30 seconds

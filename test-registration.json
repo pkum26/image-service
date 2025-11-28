@@ -1,0 +1,7 @@
+{
+  "name": "homeshopie",
+  "description": "E-commerce platform for home products and decor",
+  "domain": "homeshopie.com",
+  "allowedOrigins": ["https://homeshopie.com"],
+  "plan": "free"
+}
