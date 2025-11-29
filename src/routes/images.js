@@ -50,6 +50,14 @@ router.get('/',
   imageController.listImages
 );
 
+// Get image info/metadata - public for public images
+router.get('/:imageId/info',
+  generalRateLimit,
+  optionalApplicationAuth, // Same access pattern as image viewing
+  validateImageId,
+  imageController.getImageInfo
+);
+
 // Get image - can use token-based access or authentication
 router.get('/:imageId',
   generalRateLimit,

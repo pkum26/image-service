@@ -679,13 +679,46 @@ const deleteImage = async (req, res) => {
           const imagePath = path.resolve(process.cwd(), image.path);
           await fs.unlink(imagePath).catch(() => {}); // Ignore if file doesn't exist
 
-          // Delete variants
+          let deletedVariants = [];
+          // Delete variants and variants directory
           if (image.variants) {
             for (const [sizeName, variant] of Object.entries(image.variants)) {
               if (variant.path && sizeName !== 'original') {
                 const variantPath = path.resolve(process.cwd(), variant.path);
-                await fs.unlink(variantPath).catch(() => {});
+                try {
+                  await fs.unlink(variantPath);
+                  deletedVariants.push(sizeName);
+                  logger.info('Variant file deleted:', {
+                    imageId: image.imageId,
+                    variant: sizeName,
+                    path: variant.path
+                  });
+                } catch (err) {
+                  logger.warn('Failed to delete variant file:', {
+                    imageId: image.imageId,
+                    variant: sizeName,
+                    path: variant.path,
+                    error: err.message
+                  });
+                }
               }
+            }
+
+            // Delete variants directory if it exists
+            const baseDir = process.env.UPLOAD_DIR || './uploads';
+            const variantsDir = path.resolve(process.cwd(), baseDir, 'variants', image.imageId);
+            try {
+              await fs.rmdir(variantsDir);
+              logger.info('Variants directory deleted:', {
+                imageId: image.imageId,
+                directory: variantsDir
+              });
+            } catch (err) {
+              logger.warn('Failed to delete variants directory (may be empty or not exist):', {
+                imageId: image.imageId,
+                directory: variantsDir,
+                error: err.message
+              });
             }
           }
 
@@ -702,7 +735,8 @@ const deleteImage = async (req, res) => {
 
         logger.info('Image file deleted from storage:', {
           imageId: image.imageId,
-          path: image.path
+          path: image.path,
+          variantsDeleted: deletedVariants || []
         });
       } catch (deleteError) {
         logger.error('Failed to delete image file:', {
@@ -1064,6 +1098,169 @@ const updateImageMetadata = async (req, res) => {
   }
 };
 
+// Get Image Info Controller - returns metadata without serving the file
+const getImageInfo = async (req, res) => {
+  try {
+    const { imageId } = req.params;
+    const { token } = req.query;
+
+    const image = await Image.findOne({
+      imageId,
+      isDeleted: false
+    }).select('-versions -__v'); // Exclude version history for performance
+
+    if (!image) {
+      return res.status(404).json({
+        success: false,
+        error: 'Image not found'
+      });
+    }
+
+    // Handle access control (same logic as getImage)
+    let hasAccess = false;
+    let accessToken = null;
+
+    if (image.isPublic) {
+      // Public images - no authentication required
+      hasAccess = true;
+      await image.recordAccess();
+    } else {
+      // Private images - require authentication
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          if (decoded.imageId === imageId) {
+            hasAccess = true;
+          }
+        } catch (tokenError) {
+          return res.status(401).json({
+            success: false,
+            error: 'Invalid or expired access token'
+          });
+        }
+      } else if (req.application && req.application.id) {
+        // Check if image belongs to the authenticated application
+        if (image.application.toString() === req.application.id.toString()) {
+          hasAccess = true;
+          // Generate new access token for private images
+          accessToken = jwt.sign(
+            { imageId: image.imageId, applicationId: req.application.id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+          );
+        }
+      }
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied. Authentication required for private images.'
+        });
+      }
+
+      await image.recordAccess();
+    }
+
+    // Prepare variant information
+    const variantInfo = {};
+    if (image.variants) {
+      for (const [sizeName, variant] of Object.entries(image.variants)) {
+        variantInfo[sizeName] = {
+          width: variant.width,
+          height: variant.height,
+          size: variant.size,
+          format: variant.format || (sizeName === 'original' ? image.metadata?.format : 'webp')
+        };
+      }
+    }
+
+    // Generate URLs based on access level
+    const baseUrl = `${req.protocol}://${req.get('host')}/api/images/${image.imageId}`;
+    let urls = {};
+
+    if (image.isPublic) {
+      // Public URLs - no token needed
+      urls = {
+        thumbnail: `${baseUrl}?size=thumbnail`,
+        small: `${baseUrl}?size=small`,
+        medium: `${baseUrl}?size=medium`,
+        large: `${baseUrl}?size=large`,
+        original: baseUrl,
+        info: `${baseUrl}/info`
+      };
+    } else {
+      // Private URLs - include access token
+      const tokenParam = accessToken ? `token=${accessToken}` : (token ? `token=${token}` : '');
+      urls = {
+        thumbnail: `${baseUrl}?size=thumbnail&${tokenParam}`,
+        small: `${baseUrl}?size=small&${tokenParam}`,
+        medium: `${baseUrl}?size=medium&${tokenParam}`,
+        large: `${baseUrl}?size=large&${tokenParam}`,
+        original: `${baseUrl}?${tokenParam}`,
+        info: `${baseUrl}/info${tokenParam ? `?${tokenParam}` : ''}`
+      };
+    }
+
+    // Prepare comprehensive response
+    const responseData = {
+      imageId: image.imageId,
+      originalName: image.originalName,
+      filename: image.filename,
+      size: image.size,
+      mimetype: image.mimetype,
+      isPublic: image.isPublic,
+      metadata: {
+        width: image.metadata?.width,
+        height: image.metadata?.height,
+        format: image.metadata?.format,
+        hasAlpha: image.metadata?.hasAlpha
+      },
+      variants: variantInfo,
+      category: image.category,
+      tags: image.tags || [],
+      alt: image.alt || '',
+      title: image.title || image.originalName,
+      entityId: image.entityId,
+      entityType: image.entityType,
+      productId: image.productId,
+      accessCount: image.accessCount || 0,
+      lastAccessedAt: image.lastAccessedAt,
+      createdAt: image.createdAt,
+      updatedAt: image.updatedAt,
+      urls: urls
+    };
+
+    // Add access token for private images if generated
+    if (accessToken) {
+      responseData.accessToken = accessToken;
+    }
+
+    logger.info('Image info retrieved:', {
+      imageId: image.imageId,
+      isPublic: image.isPublic,
+      hasAuth: !!req.application,
+      accessCount: image.accessCount
+    });
+
+    res.json({
+      success: true,
+      data: responseData
+    });
+
+  } catch (error) {
+    logger.error('Get image info failed:', {
+      error: error.message,
+      imageId: req.params.imageId,
+      stack: error.stack
+    });
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve image information'
+    });
+  }
+};
+
 // Get Categories Controller
 const getCategories = async (req, res) => {
   try {
@@ -1097,6 +1294,7 @@ module.exports = {
   uploadImage,
   bulkUploadImages,
   getImage,
+  getImageInfo,
   deleteImage,
   replaceImage,
   listImages,

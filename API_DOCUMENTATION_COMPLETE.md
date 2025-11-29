@@ -354,7 +354,100 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-### 9. View Public Image
+### 9. Get Image Information
+
+Get comprehensive image metadata without downloading the file.
+
+**Endpoint:** `GET /api/images/{imageId}/info`
+
+**Headers:**
+```
+Authorization: Bearer {accessToken} (only required for private images)
+```
+
+**Query Parameters:**
+- `token` (String) - Access token for private images (alternative to Authorization header)
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "imageId": "c7904139-6d1f-4ef9-9822-70627b0e8479",
+    "originalName": "image.png",
+    "filename": "d8d3a2ef-faf9-4491-9b05-d6f044a26db9_image.png",
+    "size": 145655,
+    "mimetype": "image/png",
+    "isPublic": true,
+    "metadata": {
+      "width": 1400,
+      "height": 898,
+      "format": "png",
+      "hasAlpha": false
+    },
+    "variants": {
+      "thumbnail": {
+        "width": 150,
+        "height": 96,
+        "size": 2210,
+        "format": "webp"
+      },
+      "small": {
+        "width": 300,
+        "height": 192,
+        "size": 7182,
+        "format": "webp"
+      },
+      "medium": {
+        "width": 600,
+        "height": 385,
+        "size": 22964,
+        "format": "webp"
+      },
+      "large": {
+        "width": 1200,
+        "height": 770,
+        "size": 66810,
+        "format": "webp"
+      },
+      "original": {
+        "width": null,
+        "height": null,
+        "format": "png"
+      }
+    },
+    "category": "product",
+    "tags": ["homeshoppie", "product"],
+    "alt": "Product image - image.png",
+    "title": "image.png",
+    "entityType": "product",
+    "entityId": "entity-123",
+    "productId": "69285d5bfbf02472c1bd46dc",
+    "accessCount": 3,
+    "lastAccessedAt": "2025-11-29T03:00:06.081Z",
+    "createdAt": "2025-11-29T02:52:26.943Z",
+    "updatedAt": "2025-11-29T03:00:06.085Z",
+    "urls": {
+      "thumbnail": "http://localhost:5000/api/images/{id}?size=thumbnail",
+      "small": "http://localhost:5000/api/images/{id}?size=small",
+      "medium": "http://localhost:5000/api/images/{id}?size=medium",
+      "large": "http://localhost:5000/api/images/{id}?size=large",
+      "original": "http://localhost:5000/api/images/{id}",
+      "info": "http://localhost:5000/api/images/{id}/info"
+    },
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // Only for private images
+  }
+}
+```
+
+**Use Cases:**
+- Check image dimensions before displaying
+- Validate image exists without downloading
+- Get available size variants for responsive design
+- Retrieve metadata for SEO (alt text, titles)
+- Admin panels and image management interfaces
+
+### 10. View Public Image
 
 Access public image directly (no authentication required).
 
